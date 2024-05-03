@@ -1,0 +1,9 @@
+{
+    "files.associations": {
+        "hid.h": "c",
+        "usbd.h": "c",
+        "nvic.h": "c",
+        "scb.h": "c",
+        "systick.h": "c"
+    }
+}
