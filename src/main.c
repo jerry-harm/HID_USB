@@ -48,12 +48,6 @@ static void gpio_setup(void)
 
 }
 
-
-
-uint16_t buf_in;
-
-
-
 int main(void)
 {
 	// rcc_clock_setup_pll(&rcc_hse_configs[RCC_CLOCK_HSE]);
@@ -81,6 +75,8 @@ int main(void)
 }
 
 uint8_t count=0;
+bool flag=1;
+uint8_t buf_in[2];
 
 void sys_tick_handler(void)
 {	
@@ -89,14 +85,13 @@ void sys_tick_handler(void)
 	
 
 	if(count){
-	buf_keyboard[3] = buf_in;
+	buf_keyboard[2] = buf_in[0];
+	buf_keyboard[0] = buf_in[1];
 	count--;
 	}
 	usbd_ep_write_packet(usbd_dev, 0x81, buf_keyboard, 8);
 	
 }
-
-//TODO: use scanf instead of this
 
 void usart2_isr(void){
 
@@ -105,9 +100,15 @@ void usart2_isr(void){
 	    ((USART_SR(USART2) & USART_SR_RXNE) != 0)) {
 
 		/* Retrieve the data from the peripheral. */
-		//TODO: use buf
-		buf_in = usart_recv(USART2);
-		count=50;
+		if(flag){
+		buf_in[0] = usart_recv(USART2);
+		if(buf_in[0])flag=0;else flag=1;
+		}else{
+		    buf_in[1] = usart_recv(USART2);
+		    flag=1;
+		}
+		
+		count=10;
 
 		/* Enable transmit interrupt so it sends back the data. */
 		USART_CR1(USART2) |= USART_CR1_TXEIE;
@@ -118,7 +119,7 @@ void usart2_isr(void){
 	    ((USART_SR(USART2) & USART_SR_TXE) != 0)) {
 
 		/* Put data into the transmit register. */
-		usart_send(USART2, buf_in);
+		usart_send(USART2, buf_in[flag]);
 
 
 		/* Disable the TXE interrupt as we don't need it anymore. */
